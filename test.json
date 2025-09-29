@@ -1,0 +1,29 @@
+{
+  "detail": {
+    "http_info": {
+      "content_encoding": null,
+      "http_version": "HTTP/1.1",
+      "ip": "127.0.0.1",
+      "method": "POST",
+      "status": 200,
+      "url": "/api/rest/user"
+    },
+    "operation": {
+      "query_execution_time": 5.9616961e-2,
+      "request_id": "8c6c518d-f07a-490d-a7b2-2ac7c96c2e93",
+      "request_mode": "non-graphql",
+      "request_read_time": 1.43e-7,
+      "response_size": 175,
+      "uncompressed_response_size": 175,
+      "user_vars": {
+        "x-hasura-role": "functional_user"
+      }
+    },
+    "request_id": "8c6c518d-f07a-490d-a7b2-2ac7c96c2e93"
+  },
+  "level": "info",
+  "span_id": "7ba1b62410e623b1",
+  "timestamp": "2024-02-23T01:27:54.794+0800",
+  "trace_id": "0232c42e85ff21be9c0449242d8ab522",
+  "type": "http-log"
+}

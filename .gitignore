@@ -1,0 +1,6 @@
+open-webui/cache/*
+open-webui/vector_db/*
+open-webui/webui.db
+
+grafana/var/lib/*
+prometheus/prom_data/*
