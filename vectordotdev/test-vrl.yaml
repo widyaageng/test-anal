@@ -1,0 +1,25 @@
+# Vector test configuration for VRL parsing
+data_dir: "/tmp/vector"
+
+# Stdin source to read piped data
+sources:
+  stdin_input:
+    type: "stdin"
+
+# Transform to parse the sus transactions data
+transforms:
+  parse_sus_txn_test:
+    type: "remap"
+    inputs:
+      - "stdin_input"
+    source: |
+      . = .
+
+# Console sink to see the output
+sinks:
+  console:
+    type: "console"
+    inputs:
+      - "parse_sus_txn_test"
+    encoding:
+      codec: "json"

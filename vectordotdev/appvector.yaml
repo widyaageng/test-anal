@@ -1,0 +1,233 @@
+# Vector configuration file in YAML format
+data_dir: "/var/vector/data"
+
+# API configuration
+api:
+  enabled: true
+  address: "0.0.0.0:8686"
+
+# Sources - example configurations
+sources:
+  # docker_logs:
+  #   type: "docker_logs"
+  
+  # file_logs:
+  #   type: "file"
+  #   include:
+  #     - "/var/log/*.log"
+  #   ignore_older_secs: 86400
+  prometheus_sus_txn:
+    type: http_client
+    method: GET
+    endpoint: "http://prometheus:9090/api/v1/query?query=sus_transactions_total"
+    scrape_interval_secs: 15
+    scrape_timeout_secs: 60
+    proxy:
+      enabled: false
+    headers:
+      Accept:
+        - application/json
+    tls:
+      verify_certificate: false
+      verify_hostname: false
+  prometheus_upstream_latency:
+    type: http_client
+    method: GET
+    endpoint: "http://prometheus:9090/api/v1/query?query=upstream_call_latency"
+    scrape_interval_secs: 15
+    scrape_timeout_secs: 60
+    proxy:
+      enabled: false
+    headers:
+      Accept:
+        - application/json
+    tls:
+      verify_certificate: false
+      verify_hostname: false
+
+
+# Transforms - example log processing
+transforms:
+  # parse_logs:
+  #   type: "remap"
+  #   inputs:
+  #     - "docker_logs"
+  #     - "file_logs"
+  #   source: |
+  #     . = parse_json!(.message)
+  parse_sus_txn:
+    type: "remap"
+    inputs:
+      - "prometheus_sus_txn"
+    source: |
+      # Parse the JSON response from Prometheus
+      parsed = parse_json!(.message)
+      
+      # Check if we have valid data
+      if parsed.status == "success" && parsed.data.resultType == "vector" {
+        # Initialize an array to collect parsed metrics
+        parsed_metrics = []
+        
+        # Get the length of results array
+        results_length = length(parsed.data.result)
+        
+        # Use a counter to iterate through the array
+        i = 0
+        while i < results_length {
+          result = parsed.data.result[i]
+          
+          # Extract metric information
+          metric_name = result.metric.__name__
+          metric_category = result.metric.category
+          component = result.metric.component
+          instance = result.metric.instance
+          job = result.metric.job
+          
+          # Extract timestamp and value from the value array
+          timestamp = result.value[0]
+          value = to_float!(result.value[1])
+          
+          # Round timestamp down to 10-minute bucket (600 seconds)
+          # Convert to seconds, divide by 600, floor, then multiply back
+          bucket_timestamp = floor(timestamp / 600.0) * 600.0
+          
+          # Create structured metric object
+          metric_object = {
+            "metric_name": metric_name,
+            "metric_category": metric_category,
+            "component": component,
+            "instance": instance,
+            "job": job,
+            "timestamp": timestamp,
+            "bucket_timestamp": bucket_timestamp,
+            "value": value,
+            "parsed_at": now()
+          }
+          
+          # Add to our array
+          parsed_metrics = push(parsed_metrics, metric_object)
+          
+          # Increment counter
+          i = i + 1
+        }
+        
+        # Set the parsed metrics as the new message
+        .parsed_metrics = parsed_metrics
+        .original_status = parsed.status
+        .result_count = length(parsed_metrics)
+        
+        # Remove the original message to keep output clean
+        del(.message)
+      } else {
+        # Handle error cases
+        .error = "Failed to parse Prometheus response or no data available"
+        .original_message = .message
+      }
+
+  parse_upstream_latency:
+    type: "remap"
+    inputs:
+      - "prometheus_upstream_latency"
+    source: |
+      # Parse the JSON response from Prometheus
+      parsed = parse_json!(.message)
+      
+      # Check if we have valid data
+      if parsed.status == "success" && parsed.data.resultType == "vector" {
+        # Initialize an array to collect parsed metrics
+        parsed_metrics = []
+        
+        # Get the length of results array
+        results_length = length(parsed.data.result)
+        
+        # Use a counter to iterate through the array
+        i = 0
+        while i < results_length {
+          result = parsed.data.result[i]
+          
+          # Extract metric information
+          metric_name = result.metric.__name__
+          component = result.metric.component
+          instance = result.metric.instance
+          job = result.metric.job
+          
+          # Extract timestamp and value from the value array
+          timestamp = result.value[0]
+          value = to_float!(result.value[1])
+          
+          # Round timestamp down to 10-minute bucket (600 seconds)
+          bucket_timestamp = floor(timestamp / 600.0) * 600.0
+          
+          # Create structured metric object
+          metric_object = {
+            "metric_name": metric_name,
+            "component": component,
+            "instance": instance,
+            "job": job,
+            "timestamp": timestamp,
+            "bucket_timestamp": bucket_timestamp,
+            "value": value,
+            "parsed_at": now()
+          }
+          
+          # Add to our array
+          parsed_metrics = push(parsed_metrics, metric_object)
+          
+          # Increment counter
+          i = i + 1
+        }
+        
+        # Set the parsed metrics as the new message
+        .parsed_metrics = parsed_metrics
+        .original_status = parsed.status
+        .result_count = length(parsed_metrics)
+        
+        # Remove the original message to keep output clean
+        del(.message)
+      } else {
+        # Handle error cases
+        .error = "Failed to parse Prometheus response or no data available"
+        .original_message = .message
+      }
+      
+
+
+# Sinks - example outputs
+sinks:
+  console_sus_txn:
+    type: "console"
+    inputs:
+      - "parse_sus_txn"
+    encoding:
+      codec: "json"
+
+  console_upstream_latency:
+    type: "console"
+    inputs:
+      - "parse_upstream_latency"
+    encoding:
+      codec: "json"
+
+  # Send parsed sus_transactions to Loki
+  # loki_sus_txn:
+  #   type: "loki"
+  #   inputs:
+  #     - "parse_sus_txn"
+  #   endpoint: "http://loki:3100"
+  #   encoding:
+  #     codec: "json"
+  #   labels:
+  #     source: "vector"
+  #     metric_type: "sus_transactions"
+
+  # # Send parsed upstream_latency to Loki
+  # loki_upstream_latency:
+  #   type: "loki"
+  #   inputs:
+  #     - "parse_upstream_latency"
+  #   endpoint: "http://loki:3100"
+  #   encoding:
+  #     codec: "json"
+  #   labels:
+  #     source: "vector"
+  #     metric_type: "upstream_latency"

@@ -26,6 +26,13 @@ scrape_configs:
     scrape_interval: 10s
     metrics_path: /metrics
 
+  # Scrape FastAPI application metrics
+  - job_name: "fastapi-app"
+    static_configs:
+      - targets: ["fastapi-app:8000"]
+    scrape_interval: 15s
+    metrics_path: /metrics
+
   # Add more scrape configs as needed
   # - job_name: "your-app"
   #   static_configs:

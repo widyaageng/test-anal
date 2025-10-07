@@ -1,0 +1,45 @@
+# Vector configuration file
+data_dir = "/var/vector/data"
+
+# API configuration
+[api]
+enabled = true
+address = "0.0.0.0:8686"
+
+# Sources - example configurations
+[sources.docker_logs]
+type = "docker_logs"
+
+[sources.file_logs]
+type = "file"
+include = ["/var/log/*.log"]
+ignore_older_secs = 86400
+
+# Transforms - example log processing
+[transforms.parse_logs]
+type = "remap"
+inputs = ["docker_logs", "file_logs"]
+source = '''
+. = parse_json!(.message)
+'''
+
+# Sinks - example outputs
+[sinks.console]
+type = "console"
+inputs = ["parse_logs"]
+encoding.codec = "json"
+
+# Example: Send to Loki
+[sinks.loki]
+type = "loki"
+inputs = ["parse_logs"]
+endpoint = "http://loki:3100"
+encoding.codec = "json"
+labels.container = "{{ container_name }}"
+labels.source = "vector"
+
+# Example: Send to Prometheus
+[sinks.prometheus]
+type = "prometheus_exporter"
+inputs = ["parse_logs"]
+address = "0.0.0.0:8080"

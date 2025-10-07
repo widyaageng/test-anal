@@ -104,6 +104,51 @@ services:
     restart: unless-stopped
     networks:
     - otel
+  vector:
+    build:
+      context: ./vectordotdev
+      dockerfile: Dockerfile
+    container_name: vector
+    volumes:
+      - ./vectordotdev/var/vector/data:/var/vector/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./vectordotdev/vector.yaml:/etc/vector/vector.yaml:ro
+      - ./vectordotdev/appvector.yaml:/etc/vector/appvector.yaml:ro
+    ports:
+      - "8080:8080"   # Prometheus metrics
+      - "8686:8686"   # Vector API
+    environment:
+    - RUST_BACKTRACE=full
+    networks:
+    - otel
+    restart: unless-stopped
+  
+  fastapi-app:
+    build:
+      context: ./fastapiapp
+      dockerfile: Dockerfile
+    container_name: fastapi-app
+    ports:
+      - "8000:8000"
+    networks:
+      - otel
+    restart: unless-stopped
+    labels:
+      - "logging=promtail"
+
+  loadtest:
+    build:
+      context: ./loadtest
+      dockerfile: Dockerfile
+    container_name: loadtest
+    networks:
+      - otel
+    restart: unless-stopped
+    depends_on:
+      - fastapi-app
+    labels:
+      - "logging=promtail"
+
 volumes:
   backup:
 networks:

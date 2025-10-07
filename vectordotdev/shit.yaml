@@ -1,0 +1,29 @@
+# Vector test configuration for VRL parsing
+data_dir: "/tmp/vector"
+
+# File source to read the test data
+sources:
+  test_file:
+    type: "stdin"
+
+# Transform to parse the sus transactions data
+transforms:
+  parse_sus_txn_test:
+    type: "remap"
+    inputs:
+      - "test_file"
+    source: |
+      # Parse the JSON response from Prometheus
+      . = parse_json!(.message)
+      . = .message
+      
+      b = string("b")
+      . = parse_json!(.)
+# Console sink to see the output
+sinks:
+  console:
+    type: "console"
+    inputs:
+      - "parse_sus_txn_test"
+    encoding:
+      codec: "json"

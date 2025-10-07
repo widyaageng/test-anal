@@ -1,0 +1,80 @@
+{
+    "status": "success",
+    "data": {
+        "resultType": "vector",
+        "result": [
+            {
+                "metric": {
+                    "__name__": "upstream_call_latency",
+                    "component": "/",
+                    "instance": "fastapi-app:8000",
+                    "job": "fastapi-app"
+                },
+                "value": [
+                    1759829458.086,
+                    "0.1456460952758789"
+                ]
+            },
+            {
+                "metric": {
+                    "__name__": "upstream_call_latency",
+                    "component": "/business",
+                    "instance": "fastapi-app:8000",
+                    "job": "fastapi-app"
+                },
+                "value": [
+                    1759829458.086,
+                    "0.11161112785339355"
+                ]
+            },
+            {
+                "metric": {
+                    "__name__": "upstream_call_latency",
+                    "component": "/error",
+                    "instance": "fastapi-app:8000",
+                    "job": "fastapi-app"
+                },
+                "value": [
+                    1759829458.086,
+                    "0.1462705135345459"
+                ]
+            },
+            {
+                "metric": {
+                    "__name__": "upstream_call_latency",
+                    "component": "/health",
+                    "instance": "fastapi-app:8000",
+                    "job": "fastapi-app"
+                },
+                "value": [
+                    1759829458.086,
+                    "0.18958258628845215"
+                ]
+            },
+            {
+                "metric": {
+                    "__name__": "upstream_call_latency",
+                    "component": "/slow",
+                    "instance": "fastapi-app:8000",
+                    "job": "fastapi-app"
+                },
+                "value": [
+                    1759829458.086,
+                    "1.7666857242584229"
+                ]
+            },
+            {
+                "metric": {
+                    "__name__": "upstream_call_latency",
+                    "component": "/users",
+                    "instance": "fastapi-app:8000",
+                    "job": "fastapi-app"
+                },
+                "value": [
+                    1759829458.086,
+                    "0.16256213188171387"
+                ]
+            }
+        ]
+    }
+}
